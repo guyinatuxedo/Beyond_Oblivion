@@ -1,6 +1,6 @@
 # Record Leaking
 
-So this will cover a brief POC for how record leaking works. This POC will demonstrate how by using the input database file as an attack surface, we can query one record, but actually leak.
+So this will cover a brief POC for how record leaking works. This POC will demonstrate how by using the input database file as an attack surface, we can query one record, but actually leak subsequent, due to the database trusting the size values of a record without comprehensive checks.
 
 This was done on tokyocabinet version `1.4.48`, which according to the website (https://fallabs.com/tokyocabinet/), is the latest version at this time (03/12/2022).
 
