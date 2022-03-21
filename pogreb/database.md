@@ -57,7 +57,7 @@ We can also see in the `index.pmt` file, is the metadata for the indices.
 
 ## Metadata Storage
 
-So the metadata is stored in the `db.pmt` file. Now the only real metadata I'm seeing is, is the hashseed that is used as a secondary input to the hashing function, which begins at offset `0x200`.
+So the metadata is stored in the `db.pmt` file. Now the only real metadata I'm seeing is, is the hashseed that is used as a secondary input to the hashing function, which begins at offset `0x200`. The hashseed here is `0xfb4251e7`.
 
 ![DB Metadata](db_metadata.png)
 
