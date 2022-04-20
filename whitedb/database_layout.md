@@ -1,26 +1,3 @@
-
-Header
-
-```
-0x00	-	4 byte constant 0x4973b223
-0x04 	-	4 byte version
-0x08 	-	4 byte features
-0x0c 	-	4 byte CRC32 checksum
-0x10	-	4 byte size
-0x14	-	4 byte first free area ptr
-0x18	-	
-0x1c	-	
-0x20	-	4 byte datarec area header
-0x24 	-	4 byte longstr area header
-0x28	-	4 byte listcell area header
-0x2c	-	4 byte shortstr area header
-0x30	-	4 byte word area header
-0x34 	-	4 byte doubleword area header
-```
-
-
-
-
 ## Record Structure
 
 So records are stored as arrays of `gints`, which are `0x08` byte values. Now there is no set schema for the records in a database, and two records can have a different number of values, with different types.
