@@ -182,15 +182,274 @@ Which we see here, it is used to actually identify it:
 
 #### string
 
+So for strings, it uses the `wg_encode_str` function, which wraps the `wg_encode_unistr` function:
+
+```
+wg_int wg_encode_str(void* db, const char* str, char* lang) {
+#ifdef CHECK
+  if (!dbcheck(db)) {
+    show_data_error(db,"wrong database pointer given to wg_encode_str");
+    return WG_ILLEGAL;
+  }
+  if (str==NULL) {
+    show_data_error(db,"NULL string ptr given to wg_encode_str");
+    return WG_ILLEGAL;
+  }
+#endif
+  /* Logging handled inside wg_encode_unistr() */
+  return wg_encode_unistr(db,str,lang,WG_STRTYPE);
+}
+```
+
+So looking at the `wg_encode_unistr` function, we see that it's similar to ints with how it stores it's data. If the string is small enough, it will simply store the stirng in the field/column with some bits set to mark it's type. We see that functionallity in action here:
+
+```
+  if (lang==NULL && type==WG_STRTYPE && len<(sizeof(gint)-1)) {
+    res=TINYSTRBITS; // first zero the field and set last byte to mask
+    if (LITTLEENDIAN) {
+      dptr=((char*)(&res))+1; // type bits stored in lowest addressed byte
+    } else {
+      dptr=((char*)(&res));  // type bits stored in highest addressed byte
+    }
+    memcpy(dptr,str,len+1);
+    return res;
+  }
+```
+
+Which we see here, the value for those bits which mark the type as a tiny string:
+
+```
+../whitedb.h:#define TINYSTRBITS  0x4f       ///< tiny str ends with 0100 1111
+```
+
+However for longer strings, it will actually allocate a space in memory using the custom heap allocator. However there are two different types, short strings and long strings. Short strings have a set size to them, which we see is `32`:
+
+```
+  if (lang==NULL && type==WG_STRTYPE && len<SHORTSTR_SIZE) {
+    // short string, store in a fixlen area
+    offset=alloc_shortstr(db);
+    if (!offset) {
+      show_data_error_str(db,"cannot store a string in wg_encode_unistr",str);
+#ifdef USE_DBLOG
+      if(dbmemsegh(db)->logging.active) {
+        wg_log_encval(db, WG_ILLEGAL);
+      }
+#endif
+      return WG_ILLEGAL;
+    }
+    // loop over bytes, storing them starting from offset
+    dptr = (char *) offsettoptr(db,offset);
+    dendptr=dptr+SHORTSTR_SIZE;
+    //
+    //strcpy(dptr,sptr);
+    //memset(dptr+len,0,SHORTSTR_SIZE-len);
+    //
+    for(sptr=(char *) str; (*dptr=*sptr)!=0; sptr++, dptr++) {}; // copy string
+    for(dptr++; dptr<dendptr; dptr++) { *dptr=0; }; // zero the rest
+    // store offset to field
+#ifdef USE_DBLOG
+    if(dbmemsegh(db)->logging.active) {
+      if(wg_log_encval(db, encode_shortstr_offset(offset)))
+        return WG_ILLEGAL; /* journal error */
+    }
+#endif
+    return encode_shortstr_offset(offset);
+    //dbstore(db,ptrtoffset(record)+RECORD_HEADER_GINTS+fieldnr,encode_shortstr_offset(offset));
+  } else {
+```
+
+Which we see that size is `32`. If a string of size `20` gets allocated, a `32` byte buffer will still be allocated:
+
+```
+../whitedb.h:#define SHORTSTR_SIZE 32 /** max len of short strings  */
+```
+
+To mark it as a short string, we see that it just ors it with `0x06`:
+```
+../whitedb.h:#define encode_shortstr_offset(i) ((i)|SHORTSTRBITS)
+
+.	.	.
+../whitedb.h:#define SHORTSTRBITS  0x6      ///< short str ptr ends with  110
+```
+
+Long strings will be however long as the string is:
+
+```
+  } else {
+    offset=find_create_longstr(db,str,lang,type,len+1);
+    if (!offset) {
+      show_data_error_nr(db,"cannot create a string of size ",len);
+#ifdef USE_DBLOG
+      if(dbmemsegh(db)->logging.active) {
+        wg_log_encval(db, WG_ILLEGAL);
+      }
+#endif
+      return WG_ILLEGAL;
+    }
+#ifdef USE_DBLOG
+    if(dbmemsegh(db)->logging.active) {
+      if(wg_log_encval(db, encode_longstr_offset(offset)))
+        return WG_ILLEGAL; /* journal error */
+    }
+#endif
+    return encode_longstr_offset(offset);
+  }
+```
+
+We see that to encode it as a long string, it just ors it with `0x04`:
+```
+../whitedb.h:#define encode_longstr_offset(i) ((i)|LONGSTRBITS)
+
+.	.	.
+
+../whitedb.h:#define LONGSTRBITS  0x4      ///< longstr ptr ends with       100
+```
+
+Also in case it's not evident, to decode any of these datatypes, it effectively just zeroes out the bits used to mark the type type:
+
+```
+../whitedb.h:#define decode_longstr_offset(i) ((i) & ~LONGSTRMASK)
+```
+
 #### record
 
+Now for records it will use the `wg_encode_record` function, which wraps the `encode_datarec_offset` macro:
+
 ```
-0xB770
-0xB7A0
-0xB7D0
+// record
+
+wg_int wg_encode_record(void* db, void* data) {
+#ifdef CHECK
+  if (!dbcheck(db)) {
+    show_data_error(db,"wrong database pointer given to wg_encode_char");
+    return WG_ILLEGAL;
+  }
+#endif
+#ifdef USE_DBLOG
+/* Skip logging values that do not cause storage allocation.
+  if(dbh->logging.active) {
+    if(wg_log_encode(db, WG_RECORDTYPE, &data, 0, NULL, 0))
+      return WG_ILLEGAL;
+  }
+*/
+#endif
+  return (wg_int)(encode_datarec_offset(ptrtooffset(db,data)));
+}
 ```
 
+So in this API, records are effectively referenced as a offset. If you have a variable that is used to access a record, it holds an offset to that record. Now this just encodes it by not doing anything to it. This is because the type bits for the record is just that the lowest `3` bits are set to `0x00`. This is apparantly done as part of the memory allocation process, so it doesn't actually need to clear it out, which we see from these constants/macros:
 
+```
+../whitedb.h:#define encode_datarec_offset(i) (i)
 
+.	.	.
 
+../whitedb.h:#define isdatarec(i)    (((i)&DATARECMASK)==DATARECBITS)
 
+.	.	.
+
+../whitedb.h:#define DATARECBITS  0x0      ///< datarec ptr ends with       000
+
+.	.	.
+
+../whitedb.h:#define DATARECMASK  0x7
+```
+
+## Examples
+
+Here are some examples of the records actually stored. To generate the db, I used this source code file:
+
+```
+#include "../Db/dbapi.h"
+
+int main(int argc, char **argv) {
+  void *db, *rec0, *rec1, *rec2, *rec3;
+  wg_int int0, int1, int2, int3, string0, string1, string2, rec_enc0, rec_enc1, rec_enc2, char0, char1;
+
+  db = wg_attach_database("2000", 3000000);
+  rec0 = wg_create_record(db, 10);
+  rec1 = wg_create_record(db, 10);
+  rec2 = wg_create_record(db, 10);
+  rec3 = wg_create_record(db, 10);
+
+  int0 = wg_encode_int(db, 0x50);
+  int1 = wg_encode_int(db, 0x20);
+  int2 = wg_encode_int(db, 0x30);
+  int3 = wg_encode_int(db, 0xdeadbeefdeadbeef);
+
+  char0 = wg_encode_char(db, '0');
+  char1 = wg_encode_char(db, '1');
+
+  string0 = wg_encode_str(db, "guy", NULL);
+  string1 = wg_encode_str(db, "00000000000000000000", NULL);
+  string2 = wg_encode_str(db, "11111111111111111111111111111111111111111111111111", NULL);
+
+  rec_enc0 = wg_encode_record(db, rec0);
+  rec_enc1 = wg_encode_record(db, rec1);
+  rec_enc2 = wg_encode_record(db, rec2);
+
+  // Store the records
+  wg_set_field(db, rec0, 0, int0);
+  wg_set_field(db, rec0, 1, int1);
+  wg_set_field(db, rec0, 2, int2);
+  wg_set_field(db, rec0, 3, int3);
+
+  wg_set_field(db, rec1, 0, int1);
+  wg_set_field(db, rec1, 1, int1);
+  wg_set_field(db, rec1, 2, char0);
+  wg_set_field(db, rec1, 3, char1);
+
+  wg_set_field(db, rec2, 0, int2);
+  wg_set_field(db, rec2, 1, int2);
+  wg_set_field(db, rec2, 2, string0);
+  wg_set_field(db, rec2, 3, string1);
+  wg_set_field(db, rec2, 4, string2);
+
+  wg_set_field(db, rec3, 0, int0);
+  wg_set_field(db, rec3, 1, int0);
+  wg_set_field(db, rec3, 2, rec_enc0);
+  wg_set_field(db, rec3, 3, rec_enc1);
+  wg_set_field(db, rec3, 4, rec_enc2);
+
+  // Dump the records
+  wg_dump(db, "test-file");
+
+  return 0;
+}
+```
+
+Now to actually take a look at the db file `test-file`. Looking for the `rec0`, we see this:
+
+![Integer record](int0.png)
+
+Here we see the following values, `0x0283`, `0x0103`, `0x0183`, and the offset `0x013751`. This makes since, since we are storing the values `0x50`, `0x20`, and `0x30`, which encoded give us these values:
+
+```
+hex((0x50 << 3) | 3) = 0x0283
+hex((0x20 << 3) | 3) = 0x0103
+hex((0x20 << 3) | 3) = 0x0183
+```
+
+Now for the final one, is an offset of `0x013750`, which when we look at that memory location, we see the int value `0xdeadbeefdeadbeef`:
+
+![Integer Offset](int1.png)
+
+So next up, we have the char reord. We see it has the values `0x301f` and `0x311f`. This is what we expected since the chars being stored are `'0'` (`0x30`) and `'1'` (`0x31`). And to encode it, you will shift the byte over to the left by `0x08`, and or it by `0x1f`:
+
+![Char record](char0.png)
+
+So next up, we have the string record. Looking at it, we see the offsets `0x011750`, `0x011770`, and `0x0074d0` (ignoring last 3 bits because they are type bits): 
+
+![String record](string0.png)
+
+Looking at the offsets `0x011750` and `0x011770`, we see the strings `guy` and `00000...`:
+
+![String Storage 0](string1.png)
+
+Then looking at the offset `0x0074d0`, we see the final string `1111111111111...`:
+
+![String Storage 1](string2.png))
+
+Finally, we have the record which stores the other records. We see it holds the offsets `0xB770`, `0xB7D8`, and `0xB840`. From the previous three records we saw, we see that is the offset to those three records as it should be:
+
+![Record Holding Record](records.png)
