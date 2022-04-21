@@ -440,21 +440,3 @@ Which we see, basically just returns the actual address of the record:
 
 ./whitedb.h:#define offsettoptr(db,offset) ((void*)(dbmemsegbytes(db)+(offset))) /** give real address from offset */
 ```
-
-## Inserting Values into a Record
-
-So the processs of actually inserting a value into a record, is done with the
-
-## Selecting a Record
-
-
-
-
-
-
-
-
-
-
-
-
