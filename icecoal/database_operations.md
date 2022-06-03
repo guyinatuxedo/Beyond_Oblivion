@@ -794,3 +794,4 @@ def __update(fields,values,csvfile,headfile,etree):
 ```
 
 Looking at this, we see it's similar to record deletion. It will create a new file, where the updated rows get written to. It will use `evalthis` to determine if a record that it sees (as it's iterating through) needs to be updated. If it doesn't need to be updated, it will just write the row as is to the new file as is. If it does need to be updated, then it will change the rows it via iterating through each column of the record, and every field to update (nested for loop). Then it will write the updated rows to the new file. After it's done iterating, it will update the table file.
+
