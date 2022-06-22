@@ -392,8 +392,7 @@ For an example of the key/value pairs, here are two key/value pairs (key0/val0 a
 
 Here is an example of a total ziplist:
 
-
-
+![Ziplist](ziplist_example.png)
 
 
 So here are some checks that are done when the ziplist is being loaded, which are done in the `ziplistValidateIntegrity` function.
