@@ -69,6 +69,11 @@ $	redis-cli -p 6405
 "we added this code in"
 ```
 
-Again, considering that loading in and running lua code is a default feature, not too sure how useful this is. 
+Again, considering that loading in and running lua code is a default feature, not too sure how useful this is. However in redis, there is an `ACL` command, which can configure a user to only use certain commands. This might be useful in a scenario where a user could only run existing lua scripts, not load additional ones, since it would give us a way to execute lua code we otherwise wouldn't be able to. Now ACL isn't currently supported by dragonfly, but according to this error message, it sounds like they have plans to add it in a future release (from `server_family.cc`). Either way, this is fairly non-substantial bug, that would be pretty hard to use in any practical sense:
 
+```
+  if (args.size() == 3) {
+    return (*cntx)->SendError("ACL is not supported yet");
+  }
+```
 
