@@ -23,7 +23,7 @@ So records are stored in the `00000-1.psg` file. We can see the actual format us
 0x04:	two bytes of blank space
 Key:	The key (unknown length)
 Value:	The value (unknown length)
-CRC:	Two byte checksum
+CRC:	Four byte checksum
 ```
 
 Here we can see, the actual contents of the file. The records begin at offset `0x200`, as specified in the code:
