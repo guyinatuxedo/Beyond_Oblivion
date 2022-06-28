@@ -41,9 +41,9 @@ So in the `main.pix` file, we see the actual offsets for the records. For each r
 ```
 0x00:	4 byte hash
 0x04:	2 byte segment ID
-0x06:	1 byte key size
-0x07:	2 byte value size
-0x09:	??? 3 null bytes (unsure)
+0x06:	2 byte key size
+0x08:	2 byte value size
+0x0a:	??? 2 null bytes (unsure)
 0x0c:	4 byte int offset
 ```
 
