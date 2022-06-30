@@ -1,3 +1,7 @@
+# SDB
+
+So I wasn't able to really do amything fun with this database implementation. See below for some details as to how this database implementation works. This is probably the least documented DB implementation I have in here.
+
 # Hashing
 
 So one thing this database implementation will do, is it will hash the keys as a string. It does so using the `sdb_hash_len` function which we see here (just some binary shifting, xoring, and adding the numeric value of the ascii string):
