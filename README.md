@@ -12,3 +12,22 @@ Here are the different database implementations I looked:
 * [sqlite3](sqlite3/readme.md)
 * [tokyo-cabinet](tokyo-cabinet/readme.md)
 * [whitedb](whitedb/readme.md)
+
+### Talks
+
+Some recorded talks I did for this project:
+* [All of Them]()
+* [dragonfly](dragonfly/readme.md)
+* [icecoal]([icecoal/readme.md](https://youtu.be/_BR_sfv_ZPc))
+* [pogreb]([pogreb/readme.md](https://youtu.be/tiDZ8wrH_uo))
+* [sdb]([sdb/readme.md](https://youtu.be/jIVupb36VoU))
+* [sqlite3](https://youtu.be/KEqI4qwgXw4)
+* [tokyo-cabinet](https://youtu.be/w71CrmfLTlw)
+* [whitedb]([whitedb/readme.md](https://youtu.be/PRWI7GQYwSo))
+
+### CVEs
+
+Here is a list of CVEs that came from this project:
+```
+
+```
