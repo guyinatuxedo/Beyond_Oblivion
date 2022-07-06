@@ -6,3 +6,9 @@ So many database implementations will have the option to save the data in the da
 
 Here are the different database implementations I looked:
 * [dragonfly](dragonfly/readme.md)
+* [icecoal](icecoal/readme.md)
+* [pogreb](pogreb/readme.md)
+* [sdb](sdb/readme.md)
+* [sqlite3](sqlite3/readme.md)
+* [tokyo-cabinet](tokyo-cabinet/readme.md)
+* [whitedb](whitedb/readme.md)
