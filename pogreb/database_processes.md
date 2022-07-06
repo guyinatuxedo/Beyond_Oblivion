@@ -1,6 +1,6 @@
 ## Database Opening
 
-So the process of openign up a database is done via the `Open` function from the `db` class (`db.go` file).
+So the process of opening up a database is done via the `Open` function from the `db` class (`db.go` file).
 
 ```
 // Open opens or creates a new DB.
@@ -354,7 +354,7 @@ func (db *DB) Put(key []byte, value []byte) error {
 }
 ```
 
-So starting off, it will hash the key, the same way for record retrieval using the `hash` function. Nex tup, it will actually add the record to the datalog using the `put` function from the `datalog` class:
+So starting off, it will hash the key, the same way for record retrieval using the `hash` function. Next up, it will actually add the record to the datalog using the `put` function from the `datalog` class:
 
 ```
 func (dl *datalog) put(key []byte, value []byte) (uint16, uint32, error) {
