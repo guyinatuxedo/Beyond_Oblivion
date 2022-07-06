@@ -16,7 +16,7 @@ Here are the different database implementations I looked:
 ### Talks
 
 Some recorded talks I did for this project:
-* [All of Them]()
+* [All of Them](https://www.youtube.com/watch?v=KEqI4qwgXw4&list=PLi6Qsk-pIooLk1jeWzvfzc7Obiu99hN1L)
 * [dragonfly](dragonfly/readme.md)
 * [icecoal]([icecoal/readme.md](https://youtu.be/_BR_sfv_ZPc))
 * [pogreb]([pogreb/readme.md](https://youtu.be/tiDZ8wrH_uo))
